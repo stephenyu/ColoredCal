@@ -117,16 +117,10 @@ if [[ "$WEEKDAYS_ONLY" == true ]]; then
                             j++
                         }
                         if (int(day_str) == current_day) {
-                            # Highlight today'\''s date - need to handle this specially
-                            if (length(day_str) == 1) {
-                                result = result "\033[30;47m" char "\033[0m"
-                            } else if (i == j - length(day_str)) {
-                                # First digit of 2-digit number
-                                result = result "\033[30;47m" char
-                            } else {
-                                # Second digit of 2-digit number  
-                                result = result char "\033[0m"
-                            }
+                            # Highlight today'\''s date - output the entire number with highlighting
+                            result = result "\033[30;47m" day_str "\033[0m"
+                            # Skip the remaining digits since we'\''ve already processed the whole number
+                            i = j - 1  # -1 because the for loop will increment i
                         } else {
                             result = result char
                         }
@@ -191,7 +185,8 @@ else
                 esac
                 
                 # Check if this character is part of today's date
-                is_today=false
+                is_today_start=false
+                skip_chars=0
                 if [[ "$char" =~ [0-9] ]] && [[ "$YEAR" == "$CURRENT_YEAR" ]] && [[ $current_month_num -eq $CURRENT_MONTH ]]; then
                     # Only check if this is the start of a number (not preceded by a digit)
                     prev_char=""
@@ -209,15 +204,18 @@ else
                         done
                         
                         if [[ ${day_str#0} -eq $CURRENT_DAY ]]; then
-                            is_today=true
+                            is_today_start=true
+                            skip_chars=$((${#day_str} - 1))  # Skip the remaining digits
                         fi
                     fi
                 fi
                 
                 # Apply appropriate styling
-                if [[ $is_today == true ]]; then
-                    # Today's date - black text on white background
-                    result+="${TODAY_HIGHLIGHT}${char}${RESET}"
+                if [[ $is_today_start == true ]]; then
+                    # Today's date - highlight the entire number
+                    result+="${TODAY_HIGHLIGHT}${day_str}${RESET}"
+                    # Skip the remaining characters of this number
+                    pos=$((pos + skip_chars))
                 elif [[ "$char" =~ [0-9] ]] && { [[ $col_in_month -le 2 ]] || [[ $col_in_month -ge 18 && $col_in_month -le 20 ]]; }; then
                     # Weekend columns: Su (0-2) and Sa (18-20)
                     result+="${GREY}${char}${RESET}"
