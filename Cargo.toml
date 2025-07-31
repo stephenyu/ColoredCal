@@ -2,9 +2,13 @@
 name = "ccal"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Stephen Yu <s.yu@less3.com>"]
 description = "Enhanced calendar with weekend coloring and weekday-only option"
-license = "MIT OR Apache-2.0"
+repository = "https://github.com/stephenyu/ColoredCal"
+homepage = "https://github.com/stephenyu/ColoredCal"
+license = "MIT"
+keywords = ["calendar", "cli", "terminal"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "ccal"
@@ -14,3 +18,4 @@ path = "src/main.rs"
 clap = { version = "4.4", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 colored = "2.0"
+
