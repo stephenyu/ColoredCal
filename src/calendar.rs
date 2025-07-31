@@ -1,4 +1,4 @@
-use chrono::{Datelike, Local, NaiveDate};
+use chrono::{Datelike, Local, NaiveDate, Weekday};
 use colored::*;
 
 #[derive(Clone, Copy)]
@@ -47,136 +47,150 @@ impl Calendar {
             "July", "August", "September", "October", "November", "December"
         ];
         
+        // Month headers - adjust width based on mode
+        let month_width = match self.mode {
+            DisplayMode::Full => 20,
+            DisplayMode::WeekdaysOnly => 14, // Reduced width for weekdays-only
+        };
+        
         let month_header = months
             .iter()
-            .map(|&m| format!("{:^20}", month_names[m - 1]))
+            .map(|&m| format!("{:^width$}", month_names[m - 1], width = month_width))
             .collect::<Vec<_>>()
             .join("  ");
         println!("{}", month_header);
 
-        // Day headers
+        // Day headers - remove extra padding in weekdays-only mode
         let day_header = match self.mode {
             DisplayMode::Full => "Su Mo Tu We Th Fr Sa",
-            DisplayMode::WeekdaysOnly => "   Mo Tu We Th Fr   ",
+            DisplayMode::WeekdaysOnly => "Mo Tu We Th Fr", // Removed extra spaces
         };
         let headers = vec![day_header; 3].join("  ");
         println!("{}", headers);
 
-        // Calendar body
-        self.display_month_data(&months);
-    }
+        // Generate month grids
+        let month_grids: Vec<Vec<Vec<String>>> = months
+            .iter()
+            .map(|&month| self.generate_month_grid(month))
+            .collect();
 
-    fn display_month_data(&self, months: &[usize]) {
-        let mut month_calendars: Vec<Vec<String>> = Vec::new();
-        
-        for &month in months {
-            month_calendars.push(self.generate_month_lines(month));
-        }
-
-        let max_lines = month_calendars.iter().map(|cal| cal.len()).max().unwrap_or(0);
-
-        for line_idx in 0..max_lines {
-            let line_parts: Vec<String> = month_calendars
+        // Print rows
+        let max_rows = month_grids.iter().map(|grid| grid.len()).max().unwrap_or(0);
+        for row in 0..max_rows {
+            let row_parts: Vec<String> = month_grids
                 .iter()
-                .map(|cal| {
-                    if line_idx < cal.len() {
-                        cal[line_idx].clone()
+                .map(|grid| {
+                    if row < grid.len() {
+                        self.format_grid_row(&grid[row])
                     } else {
-                        match self.mode {
-                            DisplayMode::Full => " ".repeat(20),
-                            DisplayMode::WeekdaysOnly => " ".repeat(20),
-                        }
+                        " ".repeat(month_width) // Use dynamic width
                     }
                 })
                 .collect();
-            
-            println!("{}", line_parts.join("  "));
+            println!("{}", row_parts.join("  "));
         }
     }
 
-    fn generate_month_lines(&self, month: usize) -> Vec<String> {
-        let mut lines = Vec::new();
+    fn generate_month_grid(&self, month: usize) -> Vec<Vec<String>> {
+        let mut grid = Vec::new();
         
         let first_day = NaiveDate::from_ymd_opt(self.year, month as u32, 1).unwrap();
         let days_in_month = self.days_in_month(month);
         
-        // Calculate starting position (0 = Sunday, 6 = Saturday)
-        let start_weekday = first_day.weekday().num_days_from_sunday() as usize;
+        let cols = match self.mode {
+            DisplayMode::Full => 7,
+            DisplayMode::WeekdaysOnly => 5,
+        };
         
+        let mut current_row = vec!["  ".to_string(); cols];
         let mut current_day = 1;
-
-
-        // Fill the calendar
+        
+        // Calculate starting column
+        let start_col = self.get_start_column(first_day);
+        let mut col = start_col;
+        
+        // Fill the grid
         while current_day <= days_in_month {
-            let mut line = match self.mode {
-                DisplayMode::Full => vec!["  ".to_string(); 7],
-                DisplayMode::WeekdaysOnly => vec!["  ".to_string(); 5],
-            };
-
-            for day_of_week in 0..7 {
-                if current_day > days_in_month {
-                    break;
-                }
-
-                let should_skip_weekend = match self.mode {
-                    DisplayMode::WeekdaysOnly => day_of_week == 0 || day_of_week == 6, // Skip Sun/Sat
-                    DisplayMode::Full => false,
-                };
-
-                if should_skip_weekend {
-                    if current_day == 1 && day_of_week <= start_weekday {
-                        // Do nothing, haven't started yet
-                    } else if current_day > 1 || day_of_week >= start_weekday {
-                        current_day += 1;
-                    }
-                    continue;
-                }
-
-                if current_day == 1 && day_of_week < start_weekday {
-                    // Empty space before month starts
-                    continue;
-                }
-
-                let col_idx = match self.mode {
-                    DisplayMode::Full => day_of_week,
-                    DisplayMode::WeekdaysOnly => {
-                        if day_of_week == 0 { continue; } // Skip Sunday
-                        if day_of_week == 6 { continue; } // Skip Saturday
-                        day_of_week - 1 // Convert to Mon(0)-Fri(4)
-                    }
-                };
-
-                let day_str = format!("{:2}", current_day);
-                
-                if let Some(today) = self.today {
-                    if today.month() == month as u32 && today.day() == current_day as u32 {
-                        // Highlight today
-                        line[col_idx] = format!("{}", day_str.black().on_white());
-                    } else if matches!(self.mode, DisplayMode::Full) && (day_of_week == 0 || day_of_week == 6) {
-                        // Weekend coloring (only in full mode)
-                        line[col_idx] = format!("{}", day_str.bright_black());
-                    } else {
-                        line[col_idx] = day_str;
-                    }
-                } else if matches!(self.mode, DisplayMode::Full) && (day_of_week == 0 || day_of_week == 6) {
-                    // Weekend coloring when not current year
-                    line[col_idx] = format!("{}", day_str.bright_black());
-                } else {
-                    line[col_idx] = day_str;
-                }
-
-                current_day += 1;
+            if col >= cols {
+                // Start new row
+                grid.push(current_row);
+                current_row = vec!["  ".to_string(); cols];
+                col = 0;
             }
-
-            let line_str = match self.mode {
-                DisplayMode::Full => line.join(" "),
-                DisplayMode::WeekdaysOnly => format!("  {}  ", line.join(" ")),
-            };
             
-            lines.push(format!("{:20}", line_str));
+            // Skip weekends in weekdays-only mode
+            let weekday = self.get_weekday_for_day(month, current_day);
+            if matches!(self.mode, DisplayMode::WeekdaysOnly) && self.is_weekend(weekday) {
+                current_day += 1;
+                continue;
+            }
+            
+            // Format the day
+            let day_str = self.format_day(month, current_day, weekday);
+            current_row[col] = day_str;
+            
+            current_day += 1;
+            col += 1;
         }
-
-        lines
+        
+        // Add the last row if it has content
+        if current_row.iter().any(|cell| cell != "  ") {
+            grid.push(current_row);
+        }
+        
+        grid
+    }
+    
+    fn get_start_column(&self, first_day: NaiveDate) -> usize {
+        match self.mode {
+            DisplayMode::Full => first_day.weekday().num_days_from_sunday() as usize,
+            DisplayMode::WeekdaysOnly => {
+                let weekday = first_day.weekday();
+                if weekday == Weekday::Sat || weekday == Weekday::Sun {
+                    // If month starts on weekend, start at column 0 (Monday)
+                    0
+                } else {
+                    // Convert to weekday index: Mon=0, Tue=1, ..., Fri=4
+                    (weekday.num_days_from_monday() as usize).min(4)
+                }
+            }
+        }
+    }
+    
+    fn get_weekday_for_day(&self, month: usize, day: u32) -> Weekday {
+        NaiveDate::from_ymd_opt(self.year, month as u32, day)
+            .unwrap()
+            .weekday()
+    }
+    
+    fn is_weekend(&self, weekday: Weekday) -> bool {
+        weekday == Weekday::Sat || weekday == Weekday::Sun
+    }
+    
+    fn format_day(&self, month: usize, day: u32, weekday: Weekday) -> String {
+        let day_str = format!("{:2}", day);
+        
+        // Check if this is today
+        if let Some(today) = self.today {
+            if today.month() == month as u32 && today.day() == day {
+                return format!("{}", day_str.black().on_white());
+            }
+        }
+        
+        // Check if this is a weekend (only color in full mode)
+        if matches!(self.mode, DisplayMode::Full) && self.is_weekend(weekday) {
+            format!("{}", day_str.bright_black())
+        } else {
+            day_str
+        }
+    }
+    
+    fn format_grid_row(&self, row: &[String]) -> String {
+        let row_str = row.join(" ");
+        match self.mode {
+            DisplayMode::Full => format!("{:20}", row_str),
+            DisplayMode::WeekdaysOnly => format!("{:14}", row_str), // Reduced width, no extra padding
+        }
     }
 
     fn days_in_month(&self, month: usize) -> u32 {
