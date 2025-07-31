@@ -2,7 +2,7 @@ use chrono::{Datelike, Local, NaiveDate, Weekday};
 use colored::*;
 
 // Configurable spacing between months (number of spaces)
-const SPACE_BETWEEN_MONTHS: usize = 2;
+const SPACE_BETWEEN_MONTHS: usize = 3;
 
 #[derive(Clone, Copy)]
 pub enum DisplayMode {

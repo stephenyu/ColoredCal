@@ -1,5 +1,5 @@
 [package]
-name = "colored-cal"
+name = "ccal"
 version = "0.1.0"
 edition = "2021"
 authors = ["Your Name <your.email@example.com>"]
@@ -7,7 +7,7 @@ description = "Enhanced calendar with weekend coloring and weekday-only option"
 license = "MIT OR Apache-2.0"
 
 [[bin]]
-name = "colored-cal"
+name = "ccal"
 path = "src/main.rs"
 
 [dependencies]

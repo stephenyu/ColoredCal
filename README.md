@@ -19,7 +19,7 @@ A fast, modern Rust implementation of an enhanced calendar tool that improves up
 2. **Clone and build**:
    ```bash
    git clone <repository-url>
-   cd color-cal
+   cd ccal
    cargo build --release
    ```
 3. **Install globally** (optional):
@@ -36,7 +36,7 @@ cargo run -- [OPTIONS] [YEAR]
 ## Usage
 
 ```bash
-colored-cal [OPTIONS] [YEAR]
+ccal [OPTIONS] [YEAR]
 ```
 
 ### Options
@@ -50,16 +50,16 @@ colored-cal [OPTIONS] [YEAR]
 
 ```bash
 # Display current year with colored weekends
-colored-cal
+ccal
 
 # Display 2024 with colored weekends  
-colored-cal 2024
+ccal 2024
 
 # Display current year with weekdays only
-colored-cal -w
+ccal -w
 
 # Display 2025 with weekdays only
-colored-cal -w 2025
+ccal -w 2025
 
 # Using cargo run during development
 cargo run -- -w 2024

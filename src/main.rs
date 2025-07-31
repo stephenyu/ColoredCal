@@ -6,7 +6,7 @@ use calendar::{Calendar, DisplayMode};
 
 #[derive(Parser)]
 #[command(
-    name = "colored-cal",
+    name = "ccal",
     about = "Enhanced calendar with weekend coloring and weekday-only option",
     version = "0.1.0"
 )]
