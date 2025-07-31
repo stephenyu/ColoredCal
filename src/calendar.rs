@@ -1,8 +1,8 @@
 use chrono::{Datelike, Local, NaiveDate, Weekday};
 use colored::*;
 
-// Configurable spacing between months
-const SPACE_BETWEEN_MONTHS: &str = "  ";
+// Configurable spacing between months (number of spaces)
+const SPACE_BETWEEN_MONTHS: usize = 2;
 
 #[derive(Clone, Copy)]
 pub enum DisplayMode {
@@ -60,7 +60,7 @@ impl Calendar {
             .iter()
             .map(|&m| format!("{:^width$}", month_names[m - 1], width = month_width))
             .collect::<Vec<_>>()
-            .join(SPACE_BETWEEN_MONTHS);
+            .join(&" ".repeat(SPACE_BETWEEN_MONTHS));
         println!("{}", month_header);
 
         // Day headers - remove extra padding in weekdays-only mode
@@ -68,7 +68,7 @@ impl Calendar {
             DisplayMode::Full => "Su Mo Tu We Th Fr Sa",
             DisplayMode::WeekdaysOnly => "Mo Tu We Th Fr", // Removed extra spaces
         };
-        let headers = vec![day_header; 3].join(SPACE_BETWEEN_MONTHS);
+        let headers = vec![day_header; 3].join(&" ".repeat(SPACE_BETWEEN_MONTHS));
         println!("{}", headers);
 
         // Generate month grids
@@ -90,7 +90,7 @@ impl Calendar {
                     }
                 })
                 .collect();
-            println!("{}", row_parts.join(SPACE_BETWEEN_MONTHS));
+            println!("{}", row_parts.join(&" ".repeat(SPACE_BETWEEN_MONTHS)));
         }
     }
 
