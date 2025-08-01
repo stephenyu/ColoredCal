@@ -1,6 +1,6 @@
 # Colored Calendar 🦀
 
-A fast, modern Rust implementation of an enhanced calendar tool that improves upon the standard Unix `cal` command with colored weekends and weekday-only display options.
+A fast, modern Rust implementation of an enhanced calendar tool that improves upon the standard Unix `cal` command with colored weekends, weekday-only display options, and flexible month viewing.
 
 ## Features
 
@@ -8,6 +8,8 @@ A fast, modern Rust implementation of an enhanced calendar tool that improves up
 - **Weekdays-Only Mode**: Shows only Monday through Friday when using the `-w` flag  
 - **Today's Date Highlighting**: Highlights today's date with inverted colors (when displaying current year)
 - **Year Selection**: Display any year (defaults to current year)
+- **Month Display Mode**: Show specific months with the `-m` flag instead of full year view
+- **Smart Year Display**: Hides current year, shows future years as 2-digit format (e.g., "26" for 2026)
 - **Fast Performance**: Built with Rust for blazing-fast execution
 - **Clean Output**: Maintains the familiar `cal` command layout with visual enhancements
 
@@ -42,12 +44,28 @@ ccal [OPTIONS] [YEAR]
 ### Options
 
 - `-w, --weekdays`: Show only weekdays (Monday-Friday)
+- `-m, --months [BEFORE] [AFTER]`: Display months only (hides year). See examples below for usage patterns.
 - `-h, --help`: Print help information
 - `-V, --version`: Print version information
-- `YEAR`: Year to display (defaults to current year)
+- `YEAR`: Year to display (defaults to current year, ignored when using `-m`)
+
+### Month Display Mode (`-m` flag)
+
+The `-m` flag provides flexible month viewing with intelligent year display:
+
+- **Current year months**: Year is hidden (e.g., "August", "September")
+- **Future year months**: Year shown as 2-digit format (e.g., "January 26", "February 26")
+- **Combines with `-w`**: Works seamlessly with weekdays-only mode
+
+#### `-m` Usage Patterns:
+
+- `-m` (no arguments): Show current month only
+- `-m X` (one number): Show current month + X months after
+- `-m X Y` (two numbers): Show X months before + current month + Y months after
 
 ### Examples
 
+#### Year View (Default)
 ```bash
 # Display current year with colored weekends
 ccal
@@ -60,9 +78,37 @@ ccal -w
 
 # Display 2025 with weekdays only
 ccal -w 2025
+```
 
+#### Month View (`-m` flag)
+```bash
+# Show current month only
+ccal -m
+
+# Show current month + next month
+ccal -m 1
+
+# Show current month + next 2 months
+ccal -m 2
+
+# Show previous month + current + next month
+ccal -m 1 1
+
+# Show 2 months before + current + 1 month after
+ccal -m 2 1
+
+# Month view with weekdays only
+ccal -m 3 -w
+
+# Show current month through next 5 months (spans years)
+ccal -m 5
+```
+
+#### Development Usage
+```bash
 # Using cargo run during development
 cargo run -- -w 2024
+cargo run -- -m 2 1
 ```
 
 ## Requirements
@@ -81,12 +127,15 @@ cargo run -- -w 2024
 
 ## How It Works
 
-The Rust implementation provides two display modes:
+The Rust implementation provides three display modes:
 
-1. **Full Mode** (default): Shows complete calendar with weekend days colored in grey
+1. **Full Year Mode** (default): Shows complete year calendar with weekend days colored in grey
 2. **Weekdays-Only Mode** (`-w` flag): Displays only Monday through Friday, removing weekend columns entirely
+3. **Month Display Mode** (`-m` flag): Shows specific months without year header, with smart year labeling:
+   - Current year months: No year shown
+   - Future/past years: 2-digit year format (e.g., "26" for 2026)
 
-The calendar uses the `chrono` crate for accurate date calculations and `colored` for terminal styling, ensuring consistent behavior across different systems.
+The calendar uses the `chrono` crate for accurate date calculations and `colored` for terminal styling, ensuring consistent behavior across different systems. Month calculations properly handle year transitions.
 
 ## Development
 
