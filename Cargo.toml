@@ -1,6 +1,6 @@
 [package]
 name = "ccal"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Stephen Yu <s.yu@less3.com>"]
 description = "Enhanced calendar with weekend coloring and weekday-only option"
@@ -18,4 +18,3 @@ path = "src/main.rs"
 clap = { version = "4.4", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 colored = "2.0"
-
